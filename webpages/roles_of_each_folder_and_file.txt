@@ -1,0 +1,10 @@
+cpp_string:
+	all html files will be turned into cpp strings
+	and saved in the same name as their origin here
+	in order to do such thing
+	run cpp_stringify_templates.py
+
+templates:	
+	html templates
+test_server:
+	flask test server
