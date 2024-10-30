@@ -233,6 +233,7 @@ void hh_ui_index()
 
   // آماده‌سازی صفحه HTML با جایگزینی مقادیر هگزادسیمال
   String output = INDEX_HTML;
+  output = "<body>" + output;
   output.replace("HEX_VALUE_PLACE_HOLDER_0", "0x" + String(data[0], HEX));
   output.replace("HEX_VALUE_PLACE_HOLDER_1", "0x" + String(data[1], HEX));
   output.replace("HEX_VALUE_PLACE_HOLDER_2", "0x" + String(data[2], HEX));
@@ -246,6 +247,7 @@ void hh_ui_index()
   output += "CLIENT:";
   output += get_last_mac_address();
   output += "</pre>";
+  output += "</body>" ;
   // ارسال صفحه HTML به کلاینت
   server.send(200, "text/html", output);
 }
