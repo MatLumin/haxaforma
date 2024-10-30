@@ -1,0 +1,43 @@
+<style>
+*
+	{
+	font-family:monospace;
+	}
+</style>
+
+<script>
+let x_dir = 0;
+
+
+function go_left()
+	{
+	x_dir+=1;
+	fetch(`../api/write_to_servo?dir=${x_dir}`) 
+	}
+
+function go_right()
+	{
+	x_dir-=1;
+	fetch(`../api/write_to_servo?dir=${x_dir}`) 
+	}
+
+function go_up()
+	{
+
+	}
+
+
+function go_down()
+	{
+
+	}
+
+
+function set_servo_x_pos(value)
+	{
+	fetch(`../api/write_to_servo?dir=${value}`) 
+	}
+</script>
+
+
+<input type="range" min="0" max="179" value="0" step="1" onchange="set_servo_x_pos(this.value)">

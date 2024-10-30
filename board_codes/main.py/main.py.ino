@@ -1,12 +1,13 @@
 #include <HTTP_Method.h>
 #include <Uri.h>
 #include <WebServer.h>
+#include <esp_wifi.h>
 
 #include <WiFi.h>
 #include "SPIFFS.h"
 
 
-const String INDEX_HTML = R"V0G0N(
+const String INDEX_HTML = R"(
 <style>
 
 :root 
@@ -136,8 +137,8 @@ label
 
   <button type="submit"> Submit!</button>  
 </form>
-)V0G0N";
 
+)";
 
 
 
@@ -147,7 +148,46 @@ label
 WebServer server(80);
 
 
+String get_last_mac_address()
+  {
+  String output = "";
+  wifi_sta_list_t stations; //wifi_sta_record_t
+  for (int i=0; i!=6; i+=1)
+    {
+    output+=String(stations.sta[WiFi.softAPgetStationNum()-1].mac[i], HEX);
+    output+=":";
+    }
+  return output;
+  }
 
+void hh_ui_macs()
+  {
+  String output = "";
+  int station_number =  WiFi.softAPgetStationNum();
+  if (station_number != 0)
+    {
+    wifi_sta_list_t wifi_stations;
+    esp_wifi_ap_get_sta_list(&wifi_stations);
+    for (int index=0; index!=station_number; index+=1)
+      {
+      String suboutput = "";
+      uint8_t mac[6];
+
+      for (int index2=0; index2!=6; index2+=1)
+        {
+        suboutput+=String(wifi_stations.sta[index].mac[index2], HEX);
+        suboutput+="-";
+  
+        }
+      output += suboutput;
+      output += "\n";
+      }
+    }
+  server.send(200, "text/html", output);
+
+
+  
+  }
 
 
 void hh_ui_index()
@@ -199,7 +239,13 @@ void hh_ui_index()
   output.replace("HEX_VALUE_PLACE_HOLDER_3", "0x" + String(data[3], HEX));
   output.replace("HEX_VALUE_PLACE_HOLDER_4", "0x" + String(data[4], HEX));
   output.replace("HEX_VALUE_PLACE_HOLDER_5", "0x" + String(data[5], HEX));
+  output += "<pre style='color:white;'>";
+  output += "HOST:";
   output += WiFi.softAPmacAddress();
+  output += " ---------\n";
+  output += "CLIENT:";
+  output += get_last_mac_address();
+  output += "</pre>";
   // ارسال صفحه HTML به کلاینت
   server.send(200, "text/html", output);
 }
@@ -243,6 +289,7 @@ void setup()
   Serial.println(IP);
 
   // تنظیم روت برای نمایش فرم
+  server.on("/macs", hh_ui_macs);
   server.on("/index", hh_ui_index);
 
   server.begin();
