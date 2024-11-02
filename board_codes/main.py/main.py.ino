@@ -1,10 +1,15 @@
-#include <HTTP_Method.h>
-#include <Uri.h>
-#include <WebServer.h>
-#include <esp_wifi.h>
 
-#include <WiFi.h>
-#include "SPIFFS.h"
+//webserver 
+#include <Uri.h> //uri processing (unusued)
+#include <WebServer.h> //http webserver 
+#include <HTTP_Method.h> //http method constants
+
+//wifi 
+#include <esp_wifi.h> //esp family
+#include <WiFi.h> //access point; 
+
+//file saving in flash
+#include "SPIFFS.h" // flash io -> Input / Output
 
 
 const String INDEX_HTML = R"(
@@ -115,29 +120,30 @@ label
 
 <title>HEXA FORM</title>
 
-
+<body>
 <form id="main_form"> 
   <label>Field 0</label>
-  <input type="number" placeholder="0" name="0" min="0" max="255">
+  <input type="" value="HEX_VALUE_PLACE_HOLDER_0" placeholder="0" name="0" min="0" max="255">
 
   <label>Field 1</label>
-  <input type="number" placeholder="0" name="1" min="0" max="255">
+  <input type="" value="HEX_VALUE_PLACE_HOLDER_1"  placeholder="0" name="1" min="0" max="255">
 
   <label>Field 2</label>
-  <input type="number" placeholder="0" name="2" min="0" max="255">
+  <input type="" value="HEX_VALUE_PLACE_HOLDER_2"  placeholder="0" name="2" min="0" max="255">
 
   <label>Field 3</label>
-  <input type="number" placeholder="0" name="3" min="0" max="255">
+  <input type="" value="HEX_VALUE_PLACE_HOLDER_3"  placeholder="0" name="3" min="0" max="255">
 
   <label>Field 4</label>
-  <input type="number" placeholder="0" name="4" min="0" max="255">
+  <input type="" value="HEX_VALUE_PLACE_HOLDER_4"  placeholder="0" name="4" min="0" max="255">
 
   <label>Field 5</label>
-  <input type="number" placeholder="0" name="5" min="0" max="255">
+  
+  <input type="" value="HEX_VALUE_PLACE_HOLDER_5"  placeholder="0" name="5" min="0" max="255">
 
   <button type="submit"> Submit!</button>  
 </form>
-
+</body>
 )";
 
 
@@ -147,7 +153,7 @@ label
 
 WebServer server(80);
 
-
+/*
 String get_last_mac_address()
   {
   String output = "";
@@ -159,7 +165,10 @@ String get_last_mac_address()
     }
   return output;
   }
+*/
 
+//http handler ==========================================
+/*
 void hh_ui_macs()
   {
   String output = "";
@@ -188,10 +197,14 @@ void hh_ui_macs()
 
   
   }
-
+*/
 
 void hh_ui_index()
 {
+  /*
+  /index?0=A2&1=32
+  */
+  // String != c_str
   // استفاده از strtol برای تبدیل رشته هگزادسیمال به عدد
   int hexa0 = strtol(server.arg("0").c_str(), NULL, 16);
   int hexa1 = strtol(server.arg("1").c_str(), NULL, 16);
@@ -216,16 +229,22 @@ void hh_ui_index()
   int array_index = 0;
   int data[6] = {0, 0, 0, 0, 0, 0};
   String buffer = "";
-
+  /*
+  NULL
+  UNICODE -> 0
+  */
+  /*
+  12/nA2\n3D\n7E\n8A\n9F<NULL>
+  */
   while (file.available())
   {
     char charcode = (file.read());
-    if (charcode == 10)
-    {
+    if (charcode == 10) // \N
+      {
       data[array_index] = buffer.toInt();
       buffer = "";
       array_index += 1;
-    }
+      }
     buffer += String(charcode);
   }
 
@@ -234,20 +253,12 @@ void hh_ui_index()
   // آماده‌سازی صفحه HTML با جایگزینی مقادیر هگزادسیمال
   String output = INDEX_HTML;
   output = "<body>" + output;
-  output.replace("HEX_VALUE_PLACE_HOLDER_0", "0x" + String(data[0], HEX));
-  output.replace("HEX_VALUE_PLACE_HOLDER_1", "0x" + String(data[1], HEX));
-  output.replace("HEX_VALUE_PLACE_HOLDER_2", "0x" + String(data[2], HEX));
-  output.replace("HEX_VALUE_PLACE_HOLDER_3", "0x" + String(data[3], HEX));
-  output.replace("HEX_VALUE_PLACE_HOLDER_4", "0x" + String(data[4], HEX));
-  output.replace("HEX_VALUE_PLACE_HOLDER_5", "0x" + String(data[5], HEX));
-  output += "<pre style='color:white;'>";
-  output += "HOST:";
-  output += WiFi.softAPmacAddress();
-  output += " ---------\n";
-  output += "CLIENT:";
-  //output += get_last_mac_address();
-  output += "</pre>";
-  output += "</body>" ;
+  output.replace("HEX_VALUE_PLACE_HOLDER_0", String(data[0], HEX));
+  output.replace("HEX_VALUE_PLACE_HOLDER_1", String(data[1], HEX));
+  output.replace("HEX_VALUE_PLACE_HOLDER_2", String(data[2], HEX));
+  output.replace("HEX_VALUE_PLACE_HOLDER_3", String(data[3], HEX));
+  output.replace("HEX_VALUE_PLACE_HOLDER_4", String(data[4], HEX));
+  output.replace("HEX_VALUE_PLACE_HOLDER_5", String(data[5], HEX));
   // ارسال صفحه HTML به کلاینت
   server.send(200, "text/html", output);
 }
@@ -257,8 +268,7 @@ String generate_ssid()
   {
 
   String output="NIK-GTW-";
-  String mac_addrs = "";
-  mac_addrs += WiFi.softAPmacAddress();
+  String mac_addrs = WiFi.softAPmacAddress();
   mac_addrs = mac_addrs.substring(mac_addrs.length()-5);
   output += mac_addrs;
   return output;
@@ -269,52 +279,55 @@ String generate_ssid()
 
 void setup()
 {
-  Serial.begin(9600);
-  WiFi.mode(WIFI_AP_STA);
+  Serial.begin(9600); //setting usb output speed
 
-  
 
-  if (!SPIFFS.begin(true))
-  {
+  if (SPIFFS.begin(true) == false)
+    {
     Serial.println("An error has occurred while mounting SPIFFS");
     return;
-  }
+    }
 
   // بررسی وجود فایل data.txt و ایجاد آن در صورت عدم وجود
   File file = SPIFFS.open("/data.txt");
   if (!file)
-  {
+    {
     Serial.write("file data.txt does not exist; creating new file");
     file = SPIFFS.open("/data.txt", FILE_WRITE);
+    /*
+    0
+    0
+    0
+    0
+    0
+    0
+    */
     for (int i = 0; i < 6; i++)
-    {
+      {
       file.println(0); // مقدار اولیه صفر برای هر سلول
-    }
+      }
     file.close();
-  }
+    }
   else
-  {
+    {
     Serial.write("file data.txt exists");
     file.close();
-  }
+    }
 
+  WiFi.mode(WIFI_AP_STA);
   delay(1200);
-  const String ssid = String("NIK_GTW_")+String(WiFi.softAPmacAddress()).substring(12);
+  const String ssid = "unnamed";
   WiFi.softAP(ssid, "12345678");
-
-
   WiFi.softAP(generate_ssid(), "12345678"); 
 
-  IPAddress IP = WiFi.softAPIP();
+  IPAddress IP = WiFi.softAPIP(); //192.168.1.4
   Serial.print("AP IP address: ");
   Serial.println(IP);
 
   
 
   // تنظیم روت برای نمایش فرم
-  server.on("/macs", hh_ui_macs);
   server.on("/index", hh_ui_index);
-  
   server.begin();
 }
 
