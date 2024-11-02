@@ -245,16 +245,32 @@ void hh_ui_index()
   output += WiFi.softAPmacAddress();
   output += " ---------\n";
   output += "CLIENT:";
-  output += get_last_mac_address();
+  //output += get_last_mac_address();
   output += "</pre>";
   output += "</body>" ;
   // ارسال صفحه HTML به کلاینت
   server.send(200, "text/html", output);
 }
 
+
+String generate_ssid()
+  {
+
+  String output="NIK-GTW-";
+  String mac_addrs = "";
+  mac_addrs += WiFi.softAPmacAddress();
+  mac_addrs = mac_addrs.substring(mac_addrs.length()-5);
+  output += mac_addrs;
+  return output;
+  }
+
+
+
+
 void setup()
 {
   Serial.begin(9600);
+  WiFi.mode(WIFI_AP_STA);
 
   
 
@@ -286,14 +302,19 @@ void setup()
   const String ssid = String("NIK_GTW_")+String(WiFi.softAPmacAddress()).substring(12);
   WiFi.softAP(ssid, "12345678");
 
+
+  WiFi.softAP(generate_ssid(), "12345678"); 
+
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(IP);
 
+  
+
   // تنظیم روت برای نمایش فرم
   server.on("/macs", hh_ui_macs);
   server.on("/index", hh_ui_index);
-
+  
   server.begin();
 }
 
